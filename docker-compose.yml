@@ -1,0 +1,55 @@
+services:
+  ansible-control:
+    # image: ansible-lab/ansible-control:latest
+    build:
+      context: ./docker/ansible-control
+    container_name: ansible-control
+    hostname: ansible-control
+    restart: always
+    volumes:
+      - ./shared:/shared
+    networks:
+      ansible_network:
+        ipv4_address: 172.20.0.2
+    # Keep the container running in the background
+    tty: true
+
+  target-ubuntu:
+    image: ansible-lab/target-ubuntu:latest
+    build:
+      context: ./docker/target-ubuntu
+    container_name: target-ubuntu
+    hostname: target-ubuntu
+    restart: unless-stopped
+    networks:
+      ansible_network:
+        ipv4_address: 172.20.0.3
+
+  target-centos:
+    image: ansible-lab/target-centos:latest
+    build:
+      context: ./docker/target-centos
+    container_name: target-centos
+    hostname: target-centos
+    restart: unless-stopped
+    networks:
+      ansible_network:
+        ipv4_address: 172.20.0.4
+  
+  target-debian:
+    image: ansible-lab/target-debian:latest
+    build:
+      context: ./docker/target-debian
+    container_name: target-debian
+    hostname: target-debian
+    restart: unless-stopped
+    networks:
+      ansible_network:
+        ipv4_address: 172.20.0.5
+
+networks:
+  ansible_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
