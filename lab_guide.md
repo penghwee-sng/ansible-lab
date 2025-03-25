@@ -464,7 +464,7 @@ The lab environment already includes a pre-configured Velociraptor server runnin
 
 Credentials for the Velociraptor server:
 - Username: admin
-- Password: password123
+- Password: admin
 
 From the desktop, verify you can reach the Velociraptor server (this is possible as the ports are mapped to host machine in `docker-compose.yml`) by going to `http://localhost:8889`.
 
@@ -526,23 +526,6 @@ From the desktop, verify you can reach the Velociraptor server (this is possible
            src: ~/ansible/playbooks/velociraptor/client.config.yaml
            dest: /opt/velociraptor/client.config.yaml
            mode: '0644'
-   
-       - name: Create systemd service file (for documentation)
-         copy:
-           dest: /etc/systemd/system/velociraptor-client.service
-           content: |
-             [Unit]
-             Description=Velociraptor client service
-             After=network.target
-             
-             [Service]
-             Type=simple
-             ExecStart=/opt/velociraptor/velociraptor --config /opt/velociraptor/client.config.yaml client -v
-             Restart=always
-             RestartSec=4
-             
-             [Install]
-             WantedBy=multi-user.target
    
        # Check if Velociraptor is already running
        - name: Check if Velociraptor client is already running
