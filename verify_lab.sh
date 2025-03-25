@@ -74,6 +74,9 @@ check_exercise 7 "test -f ~/ansible/templates/index.html.j2 && grep '{{ server_'
 # Check if roles are set up
 check_exercise 8 "test -d ~/ansible/playbooks/roles/webserver && test -f ~/ansible/playbooks/roles/webserver/tasks/main.yml && echo 'FOUND' || echo 'NOT_FOUND'" "FOUND" "Ansible Roles"
 
+# Check if Velociraptor clients are deployed
+check_exercise 9 "ps aux | grep '/opt/velociraptor/velociraptor.*client' || echo 'NOT_RUNNING'" "velociraptor" "Velociraptor Client Deployment"
+
 echo -e "\n${YELLOW}Verification complete!${NC}"
 echo "Continue working through the lab guide for any unfinished exercises."
 exit 0

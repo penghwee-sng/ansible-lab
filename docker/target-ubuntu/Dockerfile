@@ -6,7 +6,7 @@ RUN echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries && \
 
 # Install packages with retry logic
 RUN apt-get update || (sleep 10 && apt-get update) || (sleep 30 && apt-get update) && \
-    apt-get install -y python3 openssh-server sudo vim nano && \
+    apt-get install -y python3 openssh-server sudo vim nano nginx && \
     apt-get clean
 
 RUN useradd -m ansible && \

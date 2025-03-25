@@ -6,7 +6,7 @@ RUN echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries && \
 
 # Install packages with retry logic
 RUN apt-get update || (sleep 10 && apt-get update) || (sleep 30 && apt-get update) && \
-    apt-get install -y python3 python3-pip openssh-client sshpass vim nano iputils-ping \
+    apt-get install -y python3 python3-pip openssh-client sshpass vim nano iputils-ping curl wget unzip \
     net-tools curl git sudo procps && \
     apt-get clean
 

@@ -14,6 +14,27 @@ services:
     # Keep the container running in the background
     tty: true
 
+  velociraptor-server:
+    image: wlambert/velociraptor:0.6.9
+    container_name: velociraptor-server
+    hostname: velociraptor-server
+    restart: always
+    volumes:
+      - ./velociraptor:/velociraptor/:rw
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8889:8889"
+    networks:
+      ansible_network:
+        ipv4_address: 172.20.0.6
+    environment:
+      - VELOX_USER=${VELOX_USER}
+      - VELOX_PASSWORD=${VELOX_PASSWORD}
+      - VELOX_ROLE=${VELOX_ROLE}
+      - VELOX_SERVER_URL=${VELOX_SERVER_URL}
+      - VELOX_FRONTEND_HOSTNAME=${VELOX_FRONTEND_HOSTNAME}
+
   target-ubuntu:
     image: ansible-lab/target-ubuntu:latest
     build:

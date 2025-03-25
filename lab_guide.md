@@ -142,14 +142,7 @@ Run these commands to practice with ad-hoc commands:
    - name: Web Server Setup
      hosts: webservers
      become: yes
-     tasks:
-       - name: Install Nginx
-         apt:
-           name: nginx
-           state: present
-           update_cache: yes
-         when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
-       
+     tasks:       
        - name: Start and enable Nginx
          service:
            name: nginx
@@ -460,6 +453,153 @@ Run these commands to practice with ad-hoc commands:
     ```bash
     ansible-playbook ~/ansible/playbooks/role_demo.yml
     ```
+
+## Exercise 9: Deploying Velociraptor for Forensic Collection
+
+This exercise will teach you how to use Ansible to deploy Velociraptor clients, an advanced Digital Forensics and Incident Response (DFIR) tool, to collect artifacts from your managed hosts.
+
+### Step 1: Understanding the Velociraptor Environment
+
+The lab environment already includes a pre-configured Velociraptor server running in a Docker container. You can access the GUI at `http://velociraptor-server:8889` or `http://localhost:8889` from the host machine.
+
+Credentials for the Velociraptor server:
+- Username: admin
+- Password: password123
+
+From the desktop, verify you can reach the Velociraptor server (this is possible as the ports are mapped to host machine in `docker-compose.yml`) by going to `http://localhost:8889`.
+
+### Step 2: Create an Ansible playbook for deploying Velociraptor clients
+
+1. First, in `ansible-control` container, create a directory for storing the client configuration and binary:
+   ```bash
+   mkdir -p ~/ansible/playbooks/velociraptor
+   cd ~/ansible/playbooks/velociraptor
+   ```
+
+2. Copy the pre-configured Velociraptor **client configuration** from the **host machine** to the **ansible-control** container:
+   ```bash
+   # This command would be run on the host machine, not inside the container
+
+   # client.config.yaml
+   docker cp ./velociraptor/client.config.yaml ansible-control:/home/ansible/ansible/playbooks/velociraptor/
+   ```
+
+   Note: Make sure the client.config.yaml exists at ./velociraptor/ on your host machine before running this command.
+
+3. Copy over velociraptor binary and enable execution:
+   ```bash
+   # in /home/ansible/ansible/playbooks/velociraptor/
+   cp /shared/binaries/velociraptor /home/ansible/ansible/playbooks/velociraptor/
+   chmod +x /home/ansible/ansible/playbooks/velociraptor/velociraptor
+   ```
+
+4. Create a playbook for deploying Velociraptor clients:
+   ```bash
+   nano ~/ansible/playbooks/velociraptor_clients.yml
+   ```
+
+5. Add the following content:
+   ```yaml
+   ---
+   - name: Deploy Velociraptor Clients
+     hosts: webservers
+     become: yes
+     vars:
+       velociraptor_server: "velociraptor-server"
+       client_config_url: "http://{{ velociraptor_server }}:8889/api/v1/GetClientConfig"
+     
+     tasks:
+       - name: Create Velociraptor client directory
+         file:
+           path: /opt/velociraptor
+           state: directory
+           mode: '0755'
+   
+       - name: Copy Velociraptor binary
+         copy:
+           src: ~/ansible/playbooks/velociraptor/velociraptor
+           dest: /opt/velociraptor/velociraptor
+           mode: '0755'
+   
+       - name: Copy client configuration
+         copy:
+           src: ~/ansible/playbooks/velociraptor/client.config.yaml
+           dest: /opt/velociraptor/client.config.yaml
+           mode: '0644'
+   
+       - name: Create systemd service file (for documentation)
+         copy:
+           dest: /etc/systemd/system/velociraptor-client.service
+           content: |
+             [Unit]
+             Description=Velociraptor client service
+             After=network.target
+             
+             [Service]
+             Type=simple
+             ExecStart=/opt/velociraptor/velociraptor --config /opt/velociraptor/client.config.yaml client -v
+             Restart=always
+             RestartSec=4
+             
+             [Install]
+             WantedBy=multi-user.target
+   
+       # Check if Velociraptor is already running
+       - name: Check if Velociraptor client is already running
+         shell: "ps aux | grep -v grep | grep '/opt/velociraptor/velociraptor.*client'"
+         register: velociraptor_process
+         ignore_errors: yes
+         changed_when: false
+   
+       # Run Velociraptor client as root directly (without systemd)
+       - name: Run Velociraptor client as root
+         shell: "nohup /opt/velociraptor/velociraptor --config /opt/velociraptor/client.config.yaml client -v > /   opt/velociraptor/client.log 2>&1 &"
+         args:
+           creates: /opt/velociraptor/client.log
+         when: velociraptor_process.stdout == ""
+   ```
+
+6. Run the playbook to deploy Velociraptor clients to host group `webservers`:
+   ```bash
+   # Due to compatibility issue, we will skip CentOS for this lab
+   ansible-playbook ~/ansible/playbooks/velociraptor_clients.yml
+   ```
+
+### Step 3: Access the Velociraptor GUI and verify connections
+
+1. You can access the Velociraptor GUI from your host machine:
+   ```
+   http://localhost:8889
+   ```
+   
+   Login with the default credentials:
+   - Username: admin
+   - Password: admin
+
+2. In the GUI, click on the "Search" button to verify that your managed nodes have connected.
+
+3. You should see your target machines (target-ubuntu & target-debian) listed as clients.
+
+### Step 4: Create a collection from the GUI
+
+1. In the Velociraptor GUI, click on one of your connected clients.
+
+2. Select "Hunt Manager" from the sidebar and click on the "+" button to start a new Hunt.
+
+3. In the "Configure Hunt" page, check the box "Start Hunt Immediately".
+
+4. Click on "Select Artifacts" and select a basic artifact "Generic.Client.DiskSpace".
+
+5. Click "Launch" to start the collection.
+
+6. View the results when the collection completes:
+   1. Select the Hunt.
+   2. Click on Clients tab.
+   3. Click on `ClientId` of `target-ubuntu`.
+   4. On the sidebar select "Collected Artifacts".
+   5. Click on "Results" and you will see the information collected, in this case the disk space information.
+
+This concludes the Velociraptor deployment exercise. You now have a dedicated Velociraptor server and clients deployed to all your managed nodes using Ansible.
 
 ## Verifying Your Progress
 
