@@ -11,7 +11,7 @@ This repository contains a comprehensive Ansible lab environment for learning th
 
 1. Clone this repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/penghwee-sng/ansible-lab.git
    cd ansible-lab
    ```
 
