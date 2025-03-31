@@ -1,6 +1,6 @@
 services:
   ansible-control:
-    # image: ansible-lab/ansible-control:latest
+    image: ansible-lab/ansible-control:latest
     build:
       context: ./docker/ansible-control
     container_name: ansible-control
